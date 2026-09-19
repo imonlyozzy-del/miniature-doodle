@@ -1,7 +1,7 @@
 {
   "name": "Sesli Yapılacaklar Listesi",
   "short_name": "Sesli Notlar",
-  "start_url": "./index.html",
+  "start_url": "./index.html?v=2",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
