@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sesli Yapılacaklar Listesi</title>
+<link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+    button { padding: 10px 20px; font-size: 16px; margin-bottom: 10px; cursor: pointer; }
+    ul { list-style-type: none; padding: 0; }
+    li { padding: 10px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+
+  <h2>Yapılacaklar Listesi</h2>
+  <button id="recordBtn">🎙️ Sesle Ekle</button>
+  <p id="status" style="color: gray;"></p>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    const recordBtn = document.getElementById('recordBtn');
+    const status = document.getElementById('status');
+    const todoList = document.getElementById('todoList');
+
+    // Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'tr-TR';
+
+      recordBtn.addEventListener('click', () => {
+        recognition.start();
+        status.textContent = 'Dinleniyor...';
+      });
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        status.textContent = `Eklenen: "${text}"`;
+        addTodo(text);
+      };
+
+      recognition.onerror = () => { status.textContent = 'Ses anlaşılamadı.'; };
+      recognition.onend = () => { if (status.textContent === 'Dinleniyor...') status.textContent = ''; };
+    } else {
+      status.textContent = 'Tarayıcınız ses tanımayı desteklemiyor.';
+    }
+
+    function addTodo(text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Sil';
+      delBtn.style.padding = '2px 8px';
+      delBtn.onclick = () => li.remove();
+
+      li.appendChild(delBtn);
+      todoList.appendChild(li);
+    }
+  </script>
+</body>
+</html>

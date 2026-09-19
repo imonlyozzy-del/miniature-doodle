@@ -1,0 +1,20 @@
+{
+  "name": "Sesli Yapılacaklar Listesi",
+  "short_name": "Sesli Notlar",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2387/2387679.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2387/2387679.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
