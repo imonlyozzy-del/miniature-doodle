@@ -21,6 +21,24 @@
       justify-content: space-between; 
       align-items: center; 
       font-size: 16px;
+      background: white;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    li.dragging {
+      opacity: 0.5;
+      background: #f0f8ff;
+    }
+    .drag-handle {
+      cursor: grab;
+      margin-right: 12px;
+      color: #aaa;
+      font-size: 18px;
+    }
+    .item-content {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
     }
     .delete-btn { 
       background: #ff4d4d; 
@@ -85,10 +103,8 @@
     const status = document.getElementById('status');
     const todoList = document.getElementById('todoList');
 
-    // Kayıtlı verileri yükleme
     let todos = JSON.parse(localStorage.getItem('myTodos')) || [];
 
-    // Türkçe karakter uyumlu ilk harfi büyütme fonksiyonu
     function capitalizeFirstLetter(string) {
       if (!string) return '';
       return string.charAt(0).toLocaleUpperCase('tr-TR') + string.slice(1);
@@ -98,23 +114,87 @@
       todoList.innerHTML = '';
       todos.forEach((todoText, index) => {
         const li = document.createElement('li');
-        
+        li.draggable = true;
+        li.dataset.index = index;
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'item-content';
+
+        const dragHandle = document.createElement('span');
+        dragHandle.className = 'drag-handle';
+        dragHandle.innerHTML = '☰';
+
         const span = document.createElement('span');
         span.textContent = todoText;
-        
+
+        contentDiv.appendChild(dragHandle);
+        contentDiv.appendChild(span);
+
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Sil';
         delBtn.className = 'delete-btn';
         delBtn.onclick = () => removeTodo(index);
 
-        li.appendChild(span);
+        li.appendChild(contentDiv);
         li.appendChild(delBtn);
+
+        // Sürükle-Bırak Olayları (Desktop & Mobile)
+        addDragListeners(li);
+
         todoList.appendChild(li);
       });
     }
 
+    let draggedItem = null;
+
+    function addDragListeners(item) {
+      item.addEventListener('dragstart', (e) => {
+        draggedItem = item;
+        item.classList.add('dragging');
+      });
+
+      item.addEventListener('dragend', () => {
+        draggedItem = null;
+        item.classList.remove('dragging');
+        saveNewOrder();
+      });
+
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(todoList, e.clientY);
+        if (afterElement == null) {
+          todoList.appendChild(draggedItem);
+        } else {
+          todoList.insertBefore(draggedItem, afterElement);
+        }
+      });
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function saveNewOrder() {
+      const newTodos = [];
+      todoList.querySelectorAll('li').forEach(li => {
+        const text = li.querySelector('.item-content span:last-child').textContent;
+        newTodos.push(text);
+      });
+      todos = newTodos;
+      localStorage.setItem('myTodos', JSON.stringify(todos));
+    }
+
     function addTodo(text) {
-      // Metni eklemeden önce ilk harfini büyütüyoruz
       const formattedText = capitalizeFirstLetter(text);
       todos.push(formattedText);
       localStorage.setItem('myTodos', JSON.stringify(todos));
@@ -127,7 +207,6 @@
       renderTodos();
     }
 
-    // Uygulama açıldığında kayıtlı ögeleri ekrana bas
     renderTodos();
 
     // Web Speech API
