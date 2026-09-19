@@ -10,7 +10,7 @@
       padding: 20px; 
       max-width: 500px; 
       margin: auto; 
-      padding-bottom: 120px; /* Butonun altında içerik kalmaması için boşluk */
+      padding-bottom: 120px;
     }
     h2 { margin-top: 10px; }
     ul { list-style-type: none; padding: 0; }
@@ -37,7 +37,6 @@
       margin-bottom: 10px; 
     }
     
-    /* Ekranın altına sabitlenen buton stilleri */
     .bottom-bar {
       position: fixed;
       bottom: 0;
@@ -76,7 +75,6 @@
   
   <ul id="todoList"></ul>
 
-  <!-- Ekranın en altındaki sabit alan -->
   <div class="bottom-bar">
     <p id="status"></p>
     <button id="recordBtn">🎙️ Sesle Ekle</button>
@@ -86,6 +84,43 @@
     const recordBtn = document.getElementById('recordBtn');
     const status = document.getElementById('status');
     const todoList = document.getElementById('todoList');
+
+    // Kayıtlı verileri yükleme
+    let todos = JSON.parse(localStorage.getItem('myTodos')) || [];
+
+    function renderTodos() {
+      todoList.innerHTML = '';
+      todos.forEach((todoText, index) => {
+        const li = document.createElement('li');
+        
+        const span = document.createElement('span');
+        span.textContent = todoText;
+        
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Sil';
+        delBtn.className = 'delete-btn';
+        delBtn.onclick = () => removeTodo(index);
+
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        todoList.appendChild(li);
+      });
+    }
+
+    function addTodo(text) {
+      todos.push(text);
+      localStorage.setItem('myTodos', JSON.stringify(todos));
+      renderTodos();
+    }
+
+    function removeTodo(index) {
+      todos.splice(index, 1);
+      localStorage.setItem('myTodos', JSON.stringify(todos));
+      renderTodos();
+    }
+
+    // Uygulama açıldığında kayıtlı ögeleri ekrana bas
+    renderTodos();
 
     // Web Speech API
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -113,22 +148,6 @@
       };
     } else {
       status.textContent = 'Tarayıcınız ses tanımayı desteklemiyor.';
-    }
-
-    function addTodo(text) {
-      const li = document.createElement('li');
-      
-      const span = document.createElement('span');
-      span.textContent = text;
-      
-      const delBtn = document.createElement('button');
-      delBtn.textContent = 'Sil';
-      delBtn.className = 'delete-btn';
-      delBtn.onclick = () => li.remove();
-
-      li.appendChild(span);
-      li.appendChild(delBtn);
-      todoList.appendChild(li);
     }
   </script>
 </body>
