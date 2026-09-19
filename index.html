@@ -88,6 +88,12 @@
     // Kayıtlı verileri yükleme
     let todos = JSON.parse(localStorage.getItem('myTodos')) || [];
 
+    // Türkçe karakter uyumlu ilk harfi büyütme fonksiyonu
+    function capitalizeFirstLetter(string) {
+      if (!string) return '';
+      return string.charAt(0).toLocaleUpperCase('tr-TR') + string.slice(1);
+    }
+
     function renderTodos() {
       todoList.innerHTML = '';
       todos.forEach((todoText, index) => {
@@ -108,7 +114,9 @@
     }
 
     function addTodo(text) {
-      todos.push(text);
+      // Metni eklemeden önce ilk harfini büyütüyoruz
+      const formattedText = capitalizeFirstLetter(text);
+      todos.push(formattedText);
       localStorage.setItem('myTodos', JSON.stringify(todos));
       renderTodos();
     }
@@ -135,7 +143,8 @@
       });
 
       recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
+        let text = event.results[0][0].transcript;
+        text = capitalizeFirstLetter(text);
         status.textContent = `Eklenen: "${text}"`;
         addTodo(text);
       };
