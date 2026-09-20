@@ -117,7 +117,24 @@
       background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
+      transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease;
+      max-height: 80px;
+      opacity: 1;
+      overflow: hidden;
     }
+    
+    /* Yumuşak Kaybolma (Ferahlık) Animasyon Sınıfı */
+    li.completing {
+      opacity: 0;
+      transform: scale(0.95) translateY(-8px);
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+      border-bottom-color: transparent;
+    }
+
     li.dragging {
       opacity: 0.5;
     }
@@ -151,6 +168,7 @@
     .actions {
       display: flex;
       gap: 6px;
+      position: relative;
     }
     .complete-btn {
       background: #28a745;
@@ -160,6 +178,7 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
+      position: relative;
     }
     .delete-btn { 
       background: #ff4d4d; 
@@ -169,6 +188,32 @@
       border-radius: 6px; 
       cursor: pointer; 
       font-size: 14px;
+    }
+
+    /* Yukarı Doğru Süzülen +1 Efekti */
+    .plus-one-float {
+      position: absolute;
+      color: #28a745;
+      font-weight: bold;
+      font-size: 16px;
+      pointer-events: none;
+      animation: floatUp 0.8s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        opacity: 0.9;
+        transform: translateY(-18px) scale(1.2);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-30px) scale(1);
+      }
     }
     
     /* Yüzen Buton Grubu (FAB Stack) */
@@ -318,6 +363,35 @@
     let xp = parseInt(localStorage.getItem('userXP')) || 0;
     let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
+    // İnce "Bel" Ses Efekti (Web Audio API)
+    function playBellSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        // İnce, kristal berraklığında bel frekansı (1567.98 Hz - G6 notası)
+        osc.frequency.setValueAtTime(1567.98, ctx.currentTime);
+
+        // Hızlı yükseliş ve yumuşak sönümleme
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.8);
+      } catch (e) {
+        // Ses desteği kısıtlıysa sessizce geç
+      }
+    }
+
     function saveTodos() {
       localStorage.setItem('myTodos', JSON.stringify(todos));
     }
@@ -421,7 +495,7 @@
         completeBtn.textContent = '✓';
         completeBtn.className = 'complete-btn';
         completeBtn.title = 'Tamamla (+1 XP)';
-        completeBtn.onclick = () => completeTodo(todo.id);
+        completeBtn.onclick = (e) => completeTodo(todo.id, li, completeBtn, e);
 
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Sil';
@@ -517,19 +591,41 @@
       renderTodos();
     }
 
-    function completeTodo(id) {
-      const index = todos.findIndex(t => t.id === id);
-      if (index !== -1) {
-        const todo = todos[index];
-        if (todo.isRecurring) {
-          todo.isCompleted = true;
-        } else {
-          todos.splice(index, 1);
+    function completeTodo(id, liElement, btnElement, event) {
+      // 1. İnce "Bel" sesini çal
+      playBellSound();
+
+      // 2. Yüzen "+1" metnini buton üzerinde oluştur
+      const plusOne = document.createElement('span');
+      plusOne.className = 'plus-one-float';
+      plusOne.textContent = '+1';
+      
+      const btnRect = btnElement.getBoundingClientRect();
+      const parentRect = btnElement.parentElement.getBoundingClientRect();
+      
+      plusOne.style.left = (btnRect.left - parentRect.left + 8) + 'px';
+      plusOne.style.top = (btnRect.top - parentRect.top - 10) + 'px';
+      
+      btnElement.parentElement.appendChild(plusOne);
+
+      // 3. Maddenin yumuşakça küçülüp silinme (ferahlık) animasyonunu başlat
+      liElement.classList.add('completing');
+
+      // Animasyon ve float efekti bittikten sonra veriyi güncelle ve yeniden çiz
+      setTimeout(() => {
+        const index = todos.findIndex(t => t.id === id);
+        if (index !== -1) {
+          const todo = todos[index];
+          if (todo.isRecurring) {
+            todo.isCompleted = true;
+          } else {
+            todos.splice(index, 1);
+          }
+          saveTodos();
+          updateXP(xp + 1);
+          renderTodos();
         }
-        saveTodos();
-        updateXP(xp + 1);
-        renderTodos();
-      }
+      }, 400);
     }
 
     function removeTodo(id) {
