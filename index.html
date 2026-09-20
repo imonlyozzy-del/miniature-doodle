@@ -243,8 +243,6 @@
     /* Sıfırlama Butonu */
     #resetFabBtn {
       background-color: var(--reset-fab-bg);
-      font-size: 20px;
-      line-height: 1;
     }
     #resetFabBtn:active {
       background-color: var(--reset-fab-active);
@@ -273,7 +271,12 @@
   <div class="fab-container">
     <!-- Sıfırlama Butonu (Üstte) -->
     <div class="fab-row">
-      <button class="fab-btn" id="resetFabBtn" title="Tekrarlayan Görevleri Sıfırla">⟳</button>
+      <button class="fab-btn" id="resetFabBtn" title="Tekrarlayan Görevleri Sıfırla">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6"/>
+          <path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Sesle Ekleme Butonu (Altta) -->
