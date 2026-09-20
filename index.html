@@ -20,6 +20,8 @@
       --minus-text: #333333;
       --fab-bg: #007bff;
       --fab-active: #0056b3;
+      --reset-fab-bg: #f57c00;
+      --reset-fab-active: #e65100;
       --status-bg: rgba(255, 255, 255, 0.95);
       --status-shadow: rgba(0,0,0,0.12);
     }
@@ -39,6 +41,8 @@
       --minus-text: #ffffff;
       --fab-bg: #0d6efd;
       --fab-active: #0b5ed7;
+      --reset-fab-bg: #fb8c00;
+      --reset-fab-active: #f57c00;
       --status-bg: rgba(30, 30, 30, 0.95);
       --status-shadow: rgba(0,0,0,0.5);
     }
@@ -48,7 +52,7 @@
       padding: 20px; 
       max-width: 500px; 
       margin: auto; 
-      padding-bottom: 80px;
+      padding-bottom: 140px;
       background-color: var(--bg-color);
       color: var(--text-color);
       transition: background-color 0.3s, color 0.3s;
@@ -74,6 +78,7 @@
       opacity: 0.7;
     }
     
+    /* XP Sayacı Stilleri */
     .xp-container {
       display: flex;
       align-items: center;
@@ -99,23 +104,6 @@
       align-items: center;
       justify-content: center;
       font-size: 14px;
-    }
-    .reset-bar-btn {
-      background: var(--xp-bg);
-      border: 1px solid var(--xp-border);
-      color: var(--xp-text);
-      border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 18px;
-      line-height: 1;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s, background-color 0.2s;
-    }
-    .reset-bar-btn:active {
-      transform: scale(0.88);
     }
 
     ul { list-style-type: none; padding: 0; }
@@ -183,16 +171,24 @@
       font-size: 14px;
     }
     
-    /* Yüzen Buton & Durum Balonu */
+    /* Yüzen Buton Grubu (FAB Stack) */
     .fab-container {
       position: fixed;
       bottom: 24px;
       right: 24px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-end;
       gap: 12px;
       z-index: 1000;
     }
+    
+    .fab-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     #status { 
       color: var(--status-color); 
       font-size: 13px; 
@@ -212,10 +208,11 @@
       opacity: 1;
       transform: translateY(0);
     }
-    #recordBtn { 
-      width: 56px;
-      height: 56px;
-      background-color: var(--fab-bg);
+
+    /* Genel FAB Buton Stili */
+    .fab-btn { 
+      width: 52px;
+      height: 52px;
       color: white;
       border: none;
       border-radius: 18px;
@@ -227,15 +224,33 @@
       justify-content: center;
       user-select: none;
     }
-    #recordBtn hover {
+    .fab-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(0,0,0,0.28);
     }
-    #recordBtn:active {
+    .fab-btn:active {
       transform: scale(0.92);
+    }
+
+    /* Mikrofon Butonu */
+    #recordBtn {
+      background-color: var(--fab-bg);
+    }
+    #recordBtn:active {
       background-color: var(--fab-active);
     }
-    #recordBtn svg {
+
+    /* Sıfırlama Butonu */
+    #resetFabBtn {
+      background-color: var(--reset-fab-bg);
+      font-size: 20px;
+      line-height: 1;
+    }
+    #resetFabBtn:active {
+      background-color: var(--reset-fab-active);
+    }
+
+    .fab-btn svg {
       display: block;
     }
   </style>
@@ -245,7 +260,6 @@
   <div class="header-bar">
     <h2 id="appTitle" title="Temayı değiştirmek için tıklayın">Yapılacaklar Listesi</h2>
     <div class="header-right">
-      <button class="reset-bar-btn" id="resetBtn" title="Tekrarlayan Görevleri Sıfırla">⟳</button>
       <div class="xp-container">
         <span id="xpDisplay">XP: 0</span>
         <button class="minus-btn" id="minusXpBtn" title="1 XP Düşür">-1</button>
@@ -255,24 +269,33 @@
   
   <ul id="todoList"></ul>
 
+  <!-- Yüzen Buton Grubu (Üst Üste Düzen) -->
   <div class="fab-container">
-    <p id="status"></p>
-    <button id="recordBtn" title="Sesle Görev Ekle">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" y1="19" x2="12" y2="22"/>
-      </svg>
-    </button>
+    <!-- Sıfırlama Butonu (Üstte) -->
+    <div class="fab-row">
+      <button class="fab-btn" id="resetFabBtn" title="Tekrarlayan Görevleri Sıfırla">⟳</button>
+    </div>
+
+    <!-- Sesle Ekleme Butonu (Altta) -->
+    <div class="fab-row">
+      <p id="status"></p>
+      <button class="fab-btn" id="recordBtn" title="Sesle Görev Ekle">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <script>
     const recordBtn = document.getElementById('recordBtn');
+    const resetFabBtn = document.getElementById('resetFabBtn');
     const status = document.getElementById('status');
     const todoList = document.getElementById('todoList');
     const xpDisplay = document.getElementById('xpDisplay');
     const minusXpBtn = document.getElementById('minusXpBtn');
-    const resetBtn = document.getElementById('resetBtn');
     const appTitle = document.getElementById('appTitle');
 
     let rawTodos = JSON.parse(localStorage.getItem('myTodos')) || [];
@@ -320,7 +343,8 @@
       updateXP(xp - 1);
     });
 
-    resetBtn.addEventListener('click', () => {
+    // Tekrarlayan Görevleri Sıfırla (Yüzen Buton)
+    resetFabBtn.addEventListener('click', () => {
       todos.forEach(todo => {
         if (todo.isRecurring && todo.isCompleted) {
           todo.isCompleted = false;
@@ -328,6 +352,8 @@
       });
       saveTodos();
       renderTodos();
+      setStatusText('Tekrarlayanlar sıfırlandı!');
+      setTimeout(() => setStatusText(''), 2000);
     });
 
     function capitalizeFirstLetter(string) {
