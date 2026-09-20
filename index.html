@@ -5,12 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sesli Yapılacaklar Listesi</title>
   <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #222222;
+      --card-bg: #ffffff;
+      --border-color: #eeeeee;
+      --header-bg: #ffffff;
+      --status-color: #666666;
+      --drag-handle: #aaaaaa;
+      --xp-bg: #eef9f1;
+      --xp-border: #c8e6c9;
+      --xp-text: #2e7d32;
+      --minus-bg: #e0e0e0;
+      --minus-text: #333333;
+    }
+
+    body.dark-mode {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --card-bg: #1e1e1e;
+      --border-color: #2c2c2c;
+      --header-bg: #1e1e1e;
+      --status-color: #aaa;
+      --drag-handle: #777777;
+      --xp-bg: #1b3320;
+      --xp-border: #2e7d32;
+      --xp-text: #81c784;
+      --minus-bg: #333333;
+      --minus-text: #ffffff;
+    }
+
     body { 
       font-family: system-ui, -apple-system, sans-serif; 
       padding: 20px; 
       max-width: 500px; 
       margin: auto; 
       padding-bottom: 120px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
     }
     .header-bar {
       display: flex;
@@ -19,23 +52,30 @@
       margin-top: 10px;
       margin-bottom: 15px;
     }
-    h2 { margin: 0; }
+    h2 { 
+      margin: 0; 
+      cursor: pointer; 
+      user-select: none;
+    }
+    h2:active {
+      opacity: 0.7;
+    }
     
     /* XP Sayacı Stilleri */
     .xp-container {
       display: flex;
       align-items: center;
-      background: #eef9f1;
-      border: 1px solid #c8e6c9;
+      background: var(--xp-bg);
+      border: 1px solid var(--xp-border);
       padding: 6px 12px;
       border-radius: 20px;
       font-weight: bold;
-      color: #2e7d32;
+      color: var(--xp-text);
       font-size: 15px;
     }
     .minus-btn {
-      background: #e0e0e0;
-      color: #333;
+      background: var(--minus-bg);
+      color: var(--minus-text);
       border: none;
       border-radius: 50%;
       width: 24px;
@@ -48,30 +88,26 @@
       justify-content: center;
       font-size: 14px;
     }
-    .minus-btn:active {
-      background: #bdbdbd;
-    }
 
     ul { list-style-type: none; padding: 0; }
     li { 
       padding: 14px 10px; 
-      border-bottom: 1px solid #eee; 
+      border-bottom: 1px solid var(--border-color); 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
       font-size: 16px;
-      background: white;
+      background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
     }
     li.dragging {
       opacity: 0.5;
-      background: #f0f8ff;
     }
     .drag-handle {
       cursor: grab;
       margin-right: 12px;
-      color: #aaa;
+      color: var(--drag-handle);
       font-size: 18px;
     }
     .item-content {
@@ -102,7 +138,7 @@
       font-size: 14px;
     }
     #status { 
-      color: #666; 
+      color: var(--status-color); 
       text-align: center; 
       font-size: 14px; 
       margin-bottom: 10px; 
@@ -113,9 +149,9 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: #ffffff;
+      background: var(--header-bg);
       padding: 15px 20px;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -143,7 +179,7 @@
 <body>
 
   <div class="header-bar">
-    <h2>Yapılacaklar Listesi</h2>
+    <h2 id="appTitle" title="Temayı değiştirmek için tıklayın">Yapılacaklar Listesi</h2>
     <div class="xp-container">
       <span id="xpDisplay">XP: 0</span>
       <button class="minus-btn" id="minusXpBtn" title="1 XP Düşür">-1</button>
@@ -163,13 +199,30 @@
     const todoList = document.getElementById('todoList');
     const xpDisplay = document.getElementById('xpDisplay');
     const minusXpBtn = document.getElementById('minusXpBtn');
+    const appTitle = document.getElementById('appTitle');
 
-    // Kayıtlı Yapılacaklar ve XP Puanı Yükleme
+    // Kayıtlı Verileri Yükleme
     let todos = JSON.parse(localStorage.getItem('myTodos')) || [];
     let xp = parseInt(localStorage.getItem('userXP')) || 0;
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+    // Tema Yönetimi
+    function applyTheme() {
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+    }
+
+    appTitle.addEventListener('click', () => {
+      isDarkMode = !isDarkMode;
+      localStorage.setItem('darkMode', isDarkMode);
+      applyTheme();
+    });
 
     function updateXP(newXp) {
-      xp = Math.max(0, newXp); // XP 0'ın altına düşmesin
+      xp = Math.max(0, newXp);
       localStorage.setItem('userXP', xp);
       xpDisplay.textContent = `XP: ${xp}`;
     }
@@ -206,14 +259,12 @@
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions';
 
-        // Tamamla Butonu (XP Kazandırır)
         const completeBtn = document.createElement('button');
         completeBtn.textContent = '✓';
         completeBtn.className = 'complete-btn';
         completeBtn.title = 'Tamamla (+1 XP)';
         completeBtn.onclick = () => completeTodo(index);
 
-        // Sil Butonu (Sadece Silme Yapar)
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Sil';
         delBtn.className = 'delete-btn';
@@ -289,7 +340,7 @@
     function completeTodo(index) {
       todos.splice(index, 1);
       localStorage.setItem('myTodos', JSON.stringify(todos));
-      updateXP(xp + 1); // +1 XP Kazandırır
+      updateXP(xp + 1);
       renderTodos();
     }
 
@@ -300,6 +351,7 @@
     }
 
     // Uygulama İlk Açılışı
+    applyTheme();
     updateXP(xp);
     renderTodos();
 
