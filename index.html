@@ -178,7 +178,6 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
-      position: relative;
     }
     .delete-btn { 
       background: #ff4d4d; 
@@ -190,15 +189,16 @@
       font-size: 14px;
     }
 
-    /* Yukarı Doğru Süzülen +1 Efekti */
+    /* Ekran Düzleminde Bağımsız Yükselen +1 Efekti */
     .plus-one-float {
-      position: absolute;
+      position: fixed;
       color: #28a745;
-      font-weight: bold;
-      font-size: 16px;
+      font-weight: 800;
+      font-size: 18px;
       pointer-events: none;
-      animation: floatUp 0.8s ease-out forwards;
-      z-index: 10;
+      animation: floatUp 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      z-index: 9999;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
 
     @keyframes floatUp {
@@ -207,12 +207,12 @@
         transform: translateY(0) scale(1);
       }
       50% {
-        opacity: 0.9;
-        transform: translateY(-18px) scale(1.2);
+        opacity: 1;
+        transform: translateY(-22px) scale(1.25);
       }
       100% {
         opacity: 0;
-        transform: translateY(-30px) scale(1);
+        transform: translateY(-40px) scale(1);
       }
     }
     
@@ -363,7 +363,7 @@
     let xp = parseInt(localStorage.getItem('userXP')) || 0;
     let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
-    // İnce "Bel" Ses Efekti (Web Audio API)
+    // İnce "Bel" Ses Efekti (Daha Belirgin Şiddette)
     function playBellSound() {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -374,19 +374,19 @@
         const gain = ctx.createGain();
 
         osc.type = 'sine';
-        // İnce, kristal berraklığında bel frekansı (1567.98 Hz - G6 notası)
+        // Kristal berraklığında bel frekansı (1567.98 Hz - G6 notası)
         osc.frequency.setValueAtTime(1567.98, ctx.currentTime);
 
-        // Hızlı yükseliş ve yumuşak sönümleme
+        // Ses seviyesi net duyulacak şekilde artırıldı (0.75 Gain)
         gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+        gain.gain.linearRampToValueAtTime(0.75, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
 
         osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.8);
+        osc.stop(ctx.currentTime + 0.9);
       } catch (e) {
         // Ses desteği kısıtlıysa sessizce geç
       }
@@ -592,26 +592,31 @@
     }
 
     function completeTodo(id, liElement, btnElement, event) {
-      // 1. İnce "Bel" sesini çal
+      // 1. İnce "Bel" sesini daha belirgin şiddette çal
       playBellSound();
 
-      // 2. Yüzen "+1" metnini buton üzerinde oluştur
+      // 2. Yüzen "+1" metnini doğrudan document.body seviyesine ekle (Silinen listeden bağımsız yükselmesi için)
       const plusOne = document.createElement('span');
       plusOne.className = 'plus-one-float';
       plusOne.textContent = '+1';
       
       const btnRect = btnElement.getBoundingClientRect();
-      const parentRect = btnElement.parentElement.getBoundingClientRect();
       
-      plusOne.style.left = (btnRect.left - parentRect.left + 8) + 'px';
-      plusOne.style.top = (btnRect.top - parentRect.top - 10) + 'px';
+      // Butonun tam ortasından yukarı yükselmesini sağla
+      plusOne.style.left = (btnRect.left + 6) + 'px';
+      plusOne.style.top = (btnRect.top - 8) + 'px';
       
-      btnElement.parentElement.appendChild(plusOne);
+      document.body.appendChild(plusOne);
+
+      // Animasyon bittiğinde +1 elemanını ekrandan temizle
+      setTimeout(() => {
+        plusOne.remove();
+      }, 850);
 
       // 3. Maddenin yumuşakça küçülüp silinme (ferahlık) animasyonunu başlat
       liElement.classList.add('completing');
 
-      // Animasyon ve float efekti bittikten sonra veriyi güncelle ve yeniden çiz
+      // Yumuşak silinme bittikten sonra veriyi güncelle ve listeyi yeniden çiz
       setTimeout(() => {
         const index = todos.findIndex(t => t.id === id);
         if (index !== -1) {
