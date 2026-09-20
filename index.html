@@ -592,28 +592,31 @@
     }
 
     function completeTodo(id, liElement, btnElement, event) {
-      // 1. İnce "Bel" sesini daha belirgin şiddette çal
+      // 1. İnce "Bel" sesini çal
       playBellSound();
 
-      // 2. Yüzen "+1" metnini doğrudan document.body seviyesine ekle (Silinen listeden bağımsız yükselmesi için)
+      // 2. Yüzen "+1" metnini doğrudan document.body seviyesine ekle
       const plusOne = document.createElement('span');
       plusOne.className = 'plus-one-float';
       plusOne.textContent = '+1';
       
       const btnRect = btnElement.getBoundingClientRect();
       
-      // Butonun tam ortasından yukarı yükselmesini sağla
       plusOne.style.left = (btnRect.left + 6) + 'px';
       plusOne.style.top = (btnRect.top - 8) + 'px';
       
       document.body.appendChild(plusOne);
 
-      // Animasyon bittiğinde +1 elemanını ekrandan temizle
       setTimeout(() => {
         plusOne.remove();
       }, 850);
 
-      // 3. Maddenin yumuşakça küçülüp silinme (ferahlık) animasyonunu başlat
+      // 3. Mobilde hafif "pıt" titreşim dokunuşu (Haptic Feedback)
+      if ('vibrate' in navigator) {
+        navigator.vibrate(18);
+      }
+
+      // 4. Maddenin yumuşakça küçülüp silinme (ferahlık) animasyonunu başlat
       liElement.classList.add('completing');
 
       // Yumuşak silinme bittikten sonra veriyi güncelle ve listeyi yeniden çiz
