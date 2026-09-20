@@ -74,7 +74,6 @@
       opacity: 0.7;
     }
     
-    /* XP Sayacı & Sıfırla Stilleri */
     .xp-container {
       display: flex;
       align-items: center;
@@ -141,7 +140,6 @@
       font-size: 18px;
     }
     
-    /* Tekrarlayan Toggle İkonu (🔄) Stili */
     .recurring-toggle {
       cursor: pointer;
       font-size: 16px;
@@ -185,7 +183,7 @@
       font-size: 14px;
     }
     
-    /* Yüzen Sesle Ekle Butonu & Yüzen Durum Balonu */
+    /* Yüzen Buton & Durum Balonu */
     .fab-container {
       position: fixed;
       bottom: 24px;
@@ -217,11 +215,10 @@
     #recordBtn { 
       width: 56px;
       height: 56px;
-      font-size: 22px; 
       background-color: var(--fab-bg);
       color: white;
       border: none;
-      border-radius: 18px; /* Dairesel kavisli modern köşeler */
+      border-radius: 18px;
       cursor: pointer;
       box-shadow: 0 6px 16px rgba(0,0,0,0.22);
       transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
@@ -230,13 +227,16 @@
       justify-content: center;
       user-select: none;
     }
-    #recordBtn:hover {
+    #recordBtn hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(0,0,0,0.28);
     }
     #recordBtn:active {
       transform: scale(0.92);
       background-color: var(--fab-active);
+    }
+    #recordBtn svg {
+      display: block;
     }
   </style>
 </head>
@@ -255,10 +255,15 @@
   
   <ul id="todoList"></ul>
 
-  <!-- Yüzen Buton Konteynırı -->
   <div class="fab-container">
     <p id="status"></p>
-    <button id="recordBtn" title="Sesle Görev Ekle">🎙️</button>
+    <button id="recordBtn" title="Sesle Görev Ekle">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="22"/>
+      </svg>
+    </button>
   </div>
 
   <script>
@@ -270,7 +275,6 @@
     const resetBtn = document.getElementById('resetBtn');
     const appTitle = document.getElementById('appTitle');
 
-    // Kayıtlı Verileri Yükleme ve Veri Dönüştürme (Migration)
     let rawTodos = JSON.parse(localStorage.getItem('myTodos')) || [];
     let todos = rawTodos.map((item, index) => {
       if (typeof item === 'string') {
@@ -292,7 +296,6 @@
       localStorage.setItem('myTodos', JSON.stringify(todos));
     }
 
-    // Tema Yönetimi
     function applyTheme() {
       if (isDarkMode) {
         document.body.classList.add('dark-mode');
@@ -317,7 +320,6 @@
       updateXP(xp - 1);
     });
 
-    // Tekrarlayan Görevleri Sıfırla (Geri Getir)
     resetBtn.addEventListener('click', () => {
       todos.forEach(todo => {
         if (todo.isRecurring && todo.isCompleted) {
@@ -346,10 +348,8 @@
     function renderTodos() {
       todoList.innerHTML = '';
       
-      // Sadece tamamlanmamış (ekranda görünmesi gereken) görevleri al
       let visibleTodos = todos.filter(todo => !todo.isCompleted);
 
-      // Otomatik Sıralama: Tek seferlikler üstte, tekrarlayanlar altta
       visibleTodos.sort((a, b) => {
         if (a.isRecurring === b.isRecurring) {
           return a.order - b.order;
@@ -369,7 +369,6 @@
         dragHandle.className = 'drag-handle';
         dragHandle.innerHTML = '☰';
 
-        // Tekrarlayan Görev Toggle İkonu (🔄)
         const recurringToggle = document.createElement('span');
         recurringToggle.className = `recurring-toggle ${todo.isRecurring ? 'active' : ''}`;
         recurringToggle.innerHTML = '🔄';
@@ -415,7 +414,6 @@
       const todo = todos.find(t => t.id === id);
       if (todo) {
         todo.isRecurring = !todo.isRecurring;
-        // Eğer tekrarlayan yapıldıysa, tekrarlayanlar grubunun en sonuna ata
         if (todo.isRecurring) {
           const maxOrder = todos.reduce((max, t) => Math.max(max, t.order || 0), 0);
           todo.order = maxOrder + 1;
@@ -495,9 +493,9 @@
       if (index !== -1) {
         const todo = todos[index];
         if (todo.isRecurring) {
-          todo.isCompleted = true; // Hafızada tut ama gizle
+          todo.isCompleted = true;
         } else {
-          todos.splice(index, 1); // Tek seferlikse kalıcı sil
+          todos.splice(index, 1);
         }
         saveTodos();
         updateXP(xp + 1);
@@ -514,12 +512,10 @@
       }
     }
 
-    // Uygulama İlk Açılışı
     applyTheme();
     updateXP(xp);
     renderTodos();
 
-    // Web Speech API
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
