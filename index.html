@@ -98,16 +98,17 @@
       border: 1px solid var(--xp-border);
       color: var(--xp-text);
       border-radius: 20px;
-      padding: 6px 10px;
-      font-size: 15px;
+      padding: 6px 12px;
+      font-size: 18px;
+      line-height: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s;
+      transition: transform 0.2s, background-color 0.2s;
     }
     .reset-bar-btn:active {
-      transform: scale(0.9);
+      transform: scale(0.88);
     }
 
     ul { list-style-type: none; padding: 0; }
@@ -219,7 +220,7 @@
   <div class="header-bar">
     <h2 id="appTitle" title="Temayı değiştirmek için tıklayın">Yapılacaklar Listesi</h2>
     <div class="header-right">
-      <button class="reset-bar-btn" id="resetBtn" title="Tekrarlayan Görevleri Sıfırla">🔄</button>
+      <button class="reset-bar-btn" id="resetBtn" title="Tekrarlayan Görevleri Sıfırla">⟳</button>
       <div class="xp-container">
         <span id="xpDisplay">XP: 0</span>
         <button class="minus-btn" id="minusXpBtn" title="1 XP Düşür">-1</button>
