@@ -26,6 +26,7 @@
       --status-shadow: rgba(0,0,0,0.12);
       --input-edit-bg: #ffffff;
       --input-edit-border: #007bff;
+      --input-edit-text: #222222;
     }
 
     body.dark-mode {
@@ -48,7 +49,19 @@
       --status-bg: rgba(30, 30, 30, 0.95);
       --status-shadow: rgba(0,0,0,0.5);
       --input-edit-bg: #2a2a2a;
-      --input-edit-border: #0d6efd;
+      --input-edit-border: #3d8bfd;
+      --input-edit-text: #ffffff;
+    }
+
+    /* Metin Seçim Renkleri (Selection) */
+    ::selection {
+      background-color: #b3d7ff;
+      color: #000000;
+    }
+
+    body.dark-mode ::selection {
+      background-color: #0d6efd;
+      color: #ffffff;
     }
 
     body { 
@@ -180,6 +193,7 @@
       transition: background-color 0.2s;
       word-break: break-word;
       flex-grow: 1;
+      user-select: text; /* Yazının rahat seçilebilmesi için */
     }
     .todo-text:hover {
       background-color: rgba(0, 0, 0, 0.05);
@@ -195,7 +209,7 @@
       border: 1.5px solid var(--input-edit-border);
       border-radius: 6px;
       background-color: var(--input-edit-bg);
-      color: var(--text-color);
+      color: var(--input-edit-text);
       width: 100%;
       box-sizing: border-box;
       outline: none;
@@ -400,7 +414,7 @@
     let xp = parseInt(localStorage.getItem('userXP')) || 0;
     let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
-    // İnce "Bel" Ses Efekti (Daha Belirgin Şiddette)
+    // İnce "Bel" Ses Efekti
     function playBellSound() {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -455,7 +469,7 @@
       updateXP(xp - 1);
     });
 
-    // Tekrarlayan Görevleri Sıfırla (Yüzen Buton)
+    // Tekrarlayan Görevleri Sıfırla
     resetFabBtn.addEventListener('click', () => {
       todos.forEach(todo => {
         if (todo.isRecurring && todo.isCompleted) {
@@ -556,7 +570,6 @@
       });
     }
 
-    // Görev metnini düzenlenebilir yapar
     function enableEditing(id, textElement) {
       const todo = todos.find(t => t.id === id);
       if (!todo) return;
@@ -675,10 +688,8 @@
     }
 
     function completeTodo(id, liElement, btnElement, event) {
-      // 1. İnce "Bel" sesini çal
       playBellSound();
 
-      // 2. Yüzen "+1" metnini doğrudan document.body seviyesine ekle
       const plusOne = document.createElement('span');
       plusOne.className = 'plus-one-float';
       plusOne.textContent = '+1';
@@ -694,15 +705,12 @@
         plusOne.remove();
       }, 850);
 
-      // 3. Mobilde hafif "pıt" titreşim dokunuşu (Haptic Feedback)
       if ('vibrate' in navigator) {
         navigator.vibrate(18);
       }
 
-      // 4. Maddenin yumuşakça küçülüp silinme (ferahlık) animasyonunu başlat
       liElement.classList.add('completing');
 
-      // Yumuşak silinme bittikten sonra veriyi güncelle ve listeyi yeniden çiz
       setTimeout(() => {
         const index = todos.findIndex(t => t.id === id);
         if (index !== -1) {
