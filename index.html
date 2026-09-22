@@ -12,7 +12,6 @@
       --border-color: #eeeeee;
       --header-bg: #ffffff;
       --status-color: #666666;
-      --drag-handle: #aaaaaa;
       --xp-bg: #eef9f1;
       --xp-border: #c8e6c9;
       --xp-text: #2e7d32;
@@ -40,7 +39,6 @@
       --border-color: #2c2c2c;
       --header-bg: #1e1e1e;
       --status-color: #aaa;
-      --drag-handle: #777777;
       --xp-bg: #1b3320;
       --xp-border: #2e7d32;
       --xp-text: #81c784;
@@ -131,7 +129,7 @@
 
     ul { list-style-type: none; padding: 0; }
     
-    /* Ana Kart Yapısı ve Akıcı CSS Geçişleri */
+    /* Tüm kart alanı tutulup sürüklenebilir hale getirildi */
     li { 
       display: flex; 
       justify-content: space-between; 
@@ -140,8 +138,8 @@
       background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
+      cursor: grab;
       
-      /* Akıcı Kayma Animasyonu için Kritik Özellikler */
       max-height: 100px;
       opacity: 1;
       padding: 12px 10px;
@@ -162,7 +160,10 @@
         background-color 0.2s ease;
     }
 
-    /* Katlandığında Akıcı Kayarak Gizlenme Sınıfı */
+    li:active {
+      cursor: grabbing;
+    }
+
     li.collapsed-subtask {
       max-height: 0 !important;
       opacity: 0 !important;
@@ -175,7 +176,6 @@
       pointer-events: none !important;
     }
 
-    /* Alt Görev Yapısı */
     li.is-subtask {
       margin-left: 28px;
       border-left: 3px solid var(--subtask-line);
@@ -186,7 +186,6 @@
       background-color: rgba(255,255,255,0.02);
     }
 
-    /* Kalın SVG Ok Butonu ve Dönüş Animasyonu */
     .collapse-toggle {
       cursor: pointer;
       display: inline-flex;
@@ -194,7 +193,7 @@
       justify-content: center;
       width: 22px;
       height: 22px;
-      margin-right: 4px;
+      margin-right: 6px;
       color: var(--toggle-arrow);
       user-select: none;
       border-radius: 4px;
@@ -218,7 +217,6 @@
       pointer-events: none;
     }
 
-    /* Sürükle Bırak ve Alt Görev Hedefleme */
     li.drag-over-subtask {
       background-color: var(--drop-target-bg) !important;
       outline: 2px dashed var(--drop-target-border);
@@ -237,13 +235,8 @@
     }
 
     li.dragging {
-      opacity: 0.4;
-    }
-    .drag-handle {
-      cursor: grab;
-      margin-right: 8px;
-      color: var(--drag-handle);
-      font-size: 18px;
+      opacity: 0.35;
+      background-color: var(--border-color);
     }
     
     .recurring-toggle {
@@ -572,7 +565,6 @@
       }
     }
 
-    /* Yumuşak Katlama Geçiş Mantığı */
     function toggleCollapse(id, e) {
       if (e) e.stopPropagation();
       const todo = todos.find(t => t.id === id);
@@ -581,7 +573,6 @@
       todo.isCollapsed = !todo.isCollapsed;
       saveTodos();
 
-      // Ok simgesini anında döndür
       const parentLi = todoList.querySelector(`li[data-id="${id}"]`);
       if (parentLi) {
         const toggleBtn = parentLi.querySelector('.collapse-toggle');
@@ -590,7 +581,6 @@
         }
       }
 
-      // Bağlı alt görevlerin DOM elemanlarını bulup class'ını animasyonla değiştir
       const subtaskTodos = todos.filter(t => t.parentId === id);
       subtaskTodos.forEach(sub => {
         const subLi = todoList.querySelector(`li[data-id="${sub.id}"]`);
@@ -650,7 +640,6 @@
         const contentDiv = document.createElement('div');
         contentDiv.className = 'item-content';
 
-        // Kalın SVG Ok Simgesi
         const toggleSpan = document.createElement('span');
         if (!todo.parentId && hasSubtasks) {
           toggleSpan.className = `collapse-toggle ${todo.isCollapsed ? 'collapsed' : ''}`;
@@ -664,10 +653,6 @@
         } else if (!todo.parentId) {
           toggleSpan.className = 'collapse-toggle spacer';
         }
-
-        const dragHandle = document.createElement('span');
-        dragHandle.className = 'drag-handle';
-        dragHandle.innerHTML = '☰';
 
         const recurringToggle = document.createElement('span');
         recurringToggle.className = `recurring-toggle ${todo.isRecurring ? 'active' : ''}`;
@@ -691,7 +676,6 @@
         if (!todo.parentId) {
           contentDiv.appendChild(toggleSpan);
         }
-        contentDiv.appendChild(dragHandle);
         contentDiv.appendChild(recurringToggle);
         contentDiv.appendChild(textSpan);
 
@@ -707,7 +691,10 @@
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Sil';
         delBtn.className = 'delete-btn';
-        delBtn.onclick = () => removeTodo(todo.id);
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeTodo(todo.id);
+        };
 
         actionsDiv.appendChild(completeBtn);
         actionsDiv.appendChild(delBtn);
@@ -897,6 +884,7 @@
     }
 
     function completeTodo(id, liElement, btnElement, event) {
+      if (event) event.stopPropagation();
       playBellSound();
 
       const plusOne = document.createElement('span');
