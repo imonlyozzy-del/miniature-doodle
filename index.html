@@ -130,9 +130,9 @@
     }
 
     ul { list-style-type: none; padding: 0; }
+    
+    /* Ana Kart Yapısı ve Akıcı CSS Geçişleri */
     li { 
-      padding: 12px 10px; 
-      border-bottom: 1px solid var(--border-color); 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
@@ -140,27 +140,39 @@
       background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      max-height: 120px;
+      
+      /* Akıcı Kayma Animasyonu için Kritik Özellikler */
+      max-height: 100px;
       opacity: 1;
+      padding: 12px 10px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 8px;
       overflow: hidden;
       box-sizing: border-box;
-      border-radius: 8px;
-      margin-bottom: 4px;
-      transform-origin: top center;
+      transform: translateY(0);
+      
+      transition: 
+        max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        margin 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s ease,
+        background-color 0.2s ease;
     }
 
-    /* Katlanma (Collapsed) Yumuşak Animasyonu */
+    /* Katlandığında Akıcı Kayarak Gizlenme Sınıfı */
     li.collapsed-subtask {
       max-height: 0 !important;
+      opacity: 0 !important;
       padding-top: 0 !important;
       padding-bottom: 0 !important;
       margin-top: 0 !important;
       margin-bottom: 0 !important;
-      opacity: 0 !important;
-      border-bottom-width: 0 !important;
-      transform: scaleY(0.8);
-      pointer-events: none;
+      border-bottom-color: transparent !important;
+      transform: translateY(-12px) !important;
+      pointer-events: none !important;
     }
 
     /* Alt Görev Yapısı */
@@ -195,7 +207,7 @@
       background-color: rgba(255,255,255,0.1);
     }
     .collapse-toggle svg {
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       display: block;
     }
     .collapse-toggle.collapsed svg {
@@ -560,14 +572,36 @@
       }
     }
 
+    /* Yumuşak Katlama Geçiş Mantığı */
     function toggleCollapse(id, e) {
       if (e) e.stopPropagation();
       const todo = todos.find(t => t.id === id);
-      if (todo) {
-        todo.isCollapsed = !todo.isCollapsed;
-        saveTodos();
-        renderTodos();
+      if (!todo) return;
+
+      todo.isCollapsed = !todo.isCollapsed;
+      saveTodos();
+
+      // Ok simgesini anında döndür
+      const parentLi = todoList.querySelector(`li[data-id="${id}"]`);
+      if (parentLi) {
+        const toggleBtn = parentLi.querySelector('.collapse-toggle');
+        if (toggleBtn) {
+          toggleBtn.classList.toggle('collapsed', todo.isCollapsed);
+        }
       }
+
+      // Bağlı alt görevlerin DOM elemanlarını bulup class'ını animasyonla değiştir
+      const subtaskTodos = todos.filter(t => t.parentId === id);
+      subtaskTodos.forEach(sub => {
+        const subLi = todoList.querySelector(`li[data-id="${sub.id}"]`);
+        if (subLi) {
+          if (todo.isCollapsed) {
+            subLi.classList.add('collapsed-subtask');
+          } else {
+            subLi.classList.remove('collapsed-subtask');
+          }
+        }
+      });
     }
 
     function renderTodos() {
