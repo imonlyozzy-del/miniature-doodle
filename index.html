@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sesli & Hiyerarşik Yapılacaklar Listesi</title>
+  <title>Sesli Yapılacaklar Listesi</title>
   <style>
     :root {
       --bg-color: #ffffff;
@@ -27,6 +27,7 @@
       --input-edit-bg: #ffffff;
       --input-edit-border: #007bff;
       --input-edit-text: #222222;
+      --drop-target: rgba(0, 123, 255, 0.15);
       --tree-line: #cccccc;
     }
 
@@ -52,6 +53,7 @@
       --input-edit-bg: #2a2a2a;
       --input-edit-border: #3d8bfd;
       --input-edit-text: #ffffff;
+      --drop-target: rgba(13, 110, 253, 0.25);
       --tree-line: #444444;
     }
 
@@ -69,7 +71,7 @@
     body { 
       font-family: system-ui, -apple-system, sans-serif; 
       padding: 20px; 
-      max-width: 550px; 
+      max-width: 500px; 
       margin: auto; 
       padding-bottom: 140px;
       background-color: var(--bg-color);
@@ -125,44 +127,60 @@
       font-size: 14px;
     }
 
-    /* Ağaç Liste Stilleri */
     ul { list-style-type: none; padding-left: 0; margin: 0; }
     ul.sub-list {
-      padding-left: 22px;
+      padding-left: 20px;
       border-left: 2px dashed var(--tree-line);
-      margin-left: 10px;
+      margin-left: 8px;
     }
 
     li { 
-      margin-top: 6px;
+      padding: 14px 10px; 
+      border-bottom: 1px solid var(--border-color); 
+      display: flex; 
+      flex-direction: column;
+      font-size: 16px;
+      background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
+      transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease, border-color 0.2s ease;
+      opacity: 1;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    /* Sürükleme Hedefi Görsel Efekti */
+    li.drop-nest {
+      background-color: var(--drop-target) !important;
+      outline: 2px dashed var(--fab-bg);
     }
 
     .todo-row {
-      padding: 10px 8px; 
-      border-bottom: 1px solid var(--border-color); 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      font-size: 15px;
-      background: var(--card-bg);
-      border-radius: 6px;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
     }
 
-    /* Daraltma / Genişletme Oku */
+    li.completing {
+      opacity: 0;
+      transform: scale(0.95) translateY(-8px);
+    }
+
+    li.dragging {
+      opacity: 0.4;
+    }
+
     .collapse-toggle {
       cursor: pointer;
-      width: 20px;
+      width: 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--status-color);
       user-select: none;
       margin-right: 4px;
-      transition: transform 0.2s;
     }
     .collapse-toggle.empty {
       visibility: hidden;
@@ -172,12 +190,12 @@
       cursor: grab;
       margin-right: 8px;
       color: var(--drag-handle);
-      font-size: 16px;
+      font-size: 18px;
     }
     
     .recurring-toggle {
       cursor: pointer;
-      font-size: 15px;
+      font-size: 16px;
       margin-right: 8px;
       opacity: 0.35;
       filter: grayscale(100%);
@@ -194,10 +212,11 @@
       display: flex;
       align-items: center;
       flex-grow: 1;
-      margin-right: 8px;
+      margin-right: 10px;
       overflow: hidden;
     }
     
+    /* Tıklanabilir Metin Alanı Stili */
     .todo-text {
       cursor: text;
       padding: 4px 6px;
@@ -215,7 +234,7 @@
     }
 
     .edit-input {
-      font-size: 15px;
+      font-size: 16px;
       padding: 4px 8px;
       border: 1.5px solid var(--input-edit-border);
       border-radius: 6px;
@@ -228,42 +247,27 @@
 
     .actions {
       display: flex;
-      gap: 4px;
+      gap: 6px;
       position: relative;
       flex-shrink: 0;
     }
-
-    .btn-icon {
-      border: none;
-      padding: 5px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .add-sub-btn {
-      background: #17a2b8;
-      color: white;
-    }
-
     .complete-btn {
       background: #28a745;
       color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
     }
-
     .delete-btn { 
       background: #ff4d4d; 
       color: white; 
-    }
-
-    /* Yumuşak Kaybolma */
-    .completing-row {
-      opacity: 0;
-      transform: scale(0.95) translateY(-6px);
+      border: none; 
+      padding: 6px 10px; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 14px;
     }
 
     /* Yükselen +1 Efekti */
@@ -396,8 +400,7 @@
     const minusXpBtn = document.getElementById('minusXpBtn');
     const appTitle = document.getElementById('appTitle');
 
-    // Veri yapısı göçü ve varsayılan yükleme
-    let rawTodos = JSON.parse(localStorage.getItem('myTodosTree')) || [];
+    let rawTodos = JSON.parse(localStorage.getItem('myTodosNested')) || JSON.parse(localStorage.getItem('myTodos')) || [];
     let todos = normalizeTodos(rawTodos);
 
     function normalizeTodos(list) {
@@ -453,7 +456,7 @@
     }
 
     function saveTodos() {
-      localStorage.setItem('myTodosTree', JSON.stringify(todos));
+      localStorage.setItem('myTodosNested', JSON.stringify(todos));
     }
 
     function applyTheme() {
@@ -480,7 +483,6 @@
       updateXP(xp - 1);
     });
 
-    // Tekrarlayan görevleri sıfırla (tüm derinliklerde)
     resetFabBtn.addEventListener('click', () => {
       function resetRecurring(list) {
         list.forEach(todo => {
@@ -529,18 +531,18 @@
     function removeTodoById(list, id) {
       for (let i = 0; i < list.length; i++) {
         if (list[i].id === id) {
-          list.splice(i, 1);
-          return true;
+          return list.splice(i, 1)[0];
         }
         if (list[i].children && list[i].children.length > 0) {
           const removed = removeTodoById(list[i].children, id);
-          if (removed) return true;
+          if (removed) return removed;
         }
       }
-      return false;
+      return null;
     }
 
-    // Rekürsif Renderlama
+    let draggedId = null;
+
     function renderTree(container, list) {
       container.innerHTML = '';
 
@@ -553,17 +555,18 @@
         return a.isRecurring ? 1 : -1;
       });
 
-      visibleTodos.forEach(todo => {
+      visibleTodos.forEach((todo) => {
         const li = document.createElement('li');
+        li.draggable = true;
         li.dataset.id = todo.id;
 
-        const row = document.createElement('div');
-        row.className = 'todo-row';
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'todo-row';
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'item-content';
 
-        // Collapse / Expand ikonu
+        // Katlama Oku
         const toggleSpan = document.createElement('span');
         toggleSpan.className = 'collapse-toggle';
         const activeChildren = todo.children ? todo.children.filter(c => !c.isCompleted) : [];
@@ -579,6 +582,10 @@
         } else {
           toggleSpan.classList.add('empty');
         }
+
+        const dragHandle = document.createElement('span');
+        dragHandle.className = 'drag-handle';
+        dragHandle.innerHTML = '☰';
 
         const recurringToggle = document.createElement('span');
         recurringToggle.className = `recurring-toggle ${todo.isRecurring ? 'active' : ''}`;
@@ -601,31 +608,22 @@
         };
 
         contentDiv.appendChild(toggleSpan);
+        contentDiv.appendChild(dragHandle);
         contentDiv.appendChild(recurringToggle);
         contentDiv.appendChild(textSpan);
 
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions';
 
-        // Alt Görev Ekleme Butonu
-        const addSubBtn = document.createElement('button');
-        addSubBtn.textContent = '➕';
-        addSubBtn.className = 'btn-icon add-sub-btn';
-        addSubBtn.title = 'Alt Görev Ekle';
-        addSubBtn.onclick = (e) => {
-          e.stopPropagation();
-          promptAddSubTask(todo);
-        };
-
         const completeBtn = document.createElement('button');
         completeBtn.textContent = '✓';
-        completeBtn.className = 'btn-icon complete-btn';
+        completeBtn.className = 'complete-btn';
         completeBtn.title = 'Tamamla (+1 XP)';
-        completeBtn.onclick = (e) => completeTodo(todo, row, completeBtn);
+        completeBtn.onclick = (e) => completeTodo(todo, li, completeBtn);
 
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Sil';
-        delBtn.className = 'btn-icon delete-btn';
+        delBtn.className = 'delete-btn';
         delBtn.onclick = (e) => {
           e.stopPropagation();
           removeTodoById(todos, todo.id);
@@ -633,15 +631,14 @@
           renderTodos();
         };
 
-        actionsDiv.appendChild(addSubBtn);
         actionsDiv.appendChild(completeBtn);
         actionsDiv.appendChild(delBtn);
 
-        row.appendChild(contentDiv);
-        row.appendChild(actionsDiv);
-        li.appendChild(row);
+        rowDiv.appendChild(contentDiv);
+        rowDiv.appendChild(actionsDiv);
+        li.appendChild(rowDiv);
 
-        // Alt Liste Render
+        // Alt Liste Ekleme
         if (activeChildren.length > 0 && !todo.collapsed) {
           const subUl = document.createElement('ul');
           subUl.className = 'sub-list';
@@ -649,6 +646,7 @@
           li.appendChild(subUl);
         }
 
+        addDragListeners(li);
         container.appendChild(li);
       });
     }
@@ -657,23 +655,105 @@
       renderTree(todoList, todos);
     }
 
-    function promptAddSubTask(parentTodo) {
-      const subText = prompt(`"${parentTodo.text}" için alt görev yazın:`);
-      if (subText && subText.trim().length > 0) {
-        const newSub = {
-          id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-          text: capitalizeFirstLetter(subText.trim()),
-          isRecurring: false,
-          isCompleted: false,
-          collapsed: false,
-          children: [],
-          order: parentTodo.children.length
-        };
-        parentTodo.children.push(newSub);
-        parentTodo.collapsed = false; // Otomatik olarak açık göster
+    // Gelişmiş Sürükle-Bırak Mantığı (Üstüne Bırakınca Alt Görev Yapma)
+    function addDragListeners(item) {
+      item.addEventListener('dragstart', (e) => {
+        e.stopPropagation();
+        draggedId = item.dataset.id;
+        item.classList.add('dragging');
+      });
+
+      item.addEventListener('dragend', (e) => {
+        e.stopPropagation();
+        draggedId = null;
+        item.classList.remove('dragging');
+        document.querySelectorAll('.drop-nest').forEach(el => el.classList.remove('drop-nest'));
+        saveNewOrder();
+      });
+
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!draggedId || draggedId === item.dataset.id) return;
+
+        const rect = item.getBoundingClientRect();
+        const offsetY = e.clientY - rect.top;
+        const middleZone = rect.height * 0.25;
+
+        // Kartın ortasına geldiyse "Alt Görev Yap" moduna geç
+        if (offsetY > middleZone && offsetY < rect.height - middleZone) {
+          item.classList.add('drop-nest');
+        } else {
+          item.classList.remove('drop-nest');
+        }
+      });
+
+      item.addEventListener('dragleave', (e) => {
+        e.stopPropagation();
+        item.classList.remove('drop-nest');
+      });
+
+      item.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        item.classList.remove('drop-nest');
+
+        if (!draggedId || draggedId === item.dataset.id) return;
+
+        const targetId = item.dataset.id;
+        const rect = item.getBoundingClientRect();
+        const offsetY = e.clientY - rect.top;
+        const middleZone = rect.height * 0.25;
+
+        const draggedItem = removeTodoById(todos, draggedId);
+        if (!draggedItem) return;
+
+        // Eğer doğrudan kartın ortasına bırakıldıysa -> Alt Görev Yap
+        if (offsetY > middleZone && offsetY < rect.height - middleZone) {
+          const targetTodo = findTodoById(todos, targetId);
+          if (targetTodo) {
+            targetTodo.children.push(draggedItem);
+            targetTodo.collapsed = false;
+          }
+        } else {
+          // Sıralama Değiştirme (Araya Bırakma)
+          let targetParent = findParentArray(todos, targetId);
+          let targetIndex = targetParent.findIndex(t => t.id === targetId);
+
+          if (offsetY >= rect.height - middleZone) {
+            targetIndex += 1;
+          }
+
+          targetParent.splice(targetIndex, 0, draggedItem);
+        }
+
         saveTodos();
         renderTodos();
+      });
+    }
+
+    function findParentArray(list, id) {
+      for (let item of list) {
+        if (item.id === id) return list;
+        if (item.children && item.children.length > 0) {
+          const found = findParentArray(item.children, id);
+          if (found) return found;
+        }
       }
+      return list;
+    }
+
+    function saveNewOrder() {
+      function updateOrder(list) {
+        list.forEach((item, index) => {
+          item.order = index;
+          if (item.children) updateOrder(item.children);
+        });
+      }
+      updateOrder(todos);
+      saveTodos();
     }
 
     function enableEditing(id, textElement) {
@@ -726,7 +806,7 @@
       renderTodos();
     }
 
-    function completeTodo(todo, rowElement, btnElement) {
+    function completeTodo(todo, liElement, btnElement) {
       playBellSound();
 
       const plusOne = document.createElement('span');
@@ -734,7 +814,7 @@
       plusOne.textContent = '+1';
       
       const btnRect = btnElement.getBoundingClientRect();
-      plusOne.style.left = (btnRect.left + 4) + 'px';
+      plusOne.style.left = (btnRect.left + 6) + 'px';
       plusOne.style.top = (btnRect.top - 8) + 'px';
       
       document.body.appendChild(plusOne);
@@ -744,15 +824,12 @@
         navigator.vibrate(18);
       }
 
-      rowElement.classList.add('completing-row');
+      liElement.classList.add('completing');
 
       setTimeout(() => {
-        // Kendisini ve altındaki tüm çocukları tamamla
         function markAllCompleted(item) {
           item.isCompleted = true;
-          if (item.children) {
-            item.children.forEach(markAllCompleted);
-          }
+          if (item.children) item.children.forEach(markAllCompleted);
         }
         markAllCompleted(todo);
 
@@ -766,7 +843,6 @@
     updateXP(xp);
     renderTodos();
 
-    // Sesli Komut Entegrasyonu
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
