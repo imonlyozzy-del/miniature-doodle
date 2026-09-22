@@ -24,6 +24,8 @@
       --reset-fab-active: #e65100;
       --status-bg: rgba(255, 255, 255, 0.95);
       --status-shadow: rgba(0,0,0,0.12);
+      --input-edit-bg: #ffffff;
+      --input-edit-border: #007bff;
     }
 
     body.dark-mode {
@@ -45,6 +47,8 @@
       --reset-fab-active: #f57c00;
       --status-bg: rgba(30, 30, 30, 0.95);
       --status-shadow: rgba(0,0,0,0.5);
+      --input-edit-bg: #2a2a2a;
+      --input-edit-border: #0d6efd;
     }
 
     body { 
@@ -164,11 +168,44 @@
       display: flex;
       align-items: center;
       flex-grow: 1;
+      margin-right: 10px;
+      overflow: hidden;
     }
+    
+    /* Tıklanabilir Metin Alanı Stili */
+    .todo-text {
+      cursor: text;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      word-break: break-word;
+      flex-grow: 1;
+    }
+    .todo-text:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    body.dark-mode .todo-text:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Düzenleme Giriş Kutusu Stili */
+    .edit-input {
+      font-size: 16px;
+      padding: 4px 8px;
+      border: 1.5px solid var(--input-edit-border);
+      border-radius: 6px;
+      background-color: var(--input-edit-bg);
+      color: var(--text-color);
+      width: 100%;
+      box-sizing: border-box;
+      outline: none;
+    }
+
     .actions {
       display: flex;
       gap: 6px;
       position: relative;
+      flex-shrink: 0;
     }
     .complete-btn {
       background: #28a745;
@@ -374,10 +411,8 @@
         const gain = ctx.createGain();
 
         osc.type = 'sine';
-        // Kristal berraklığında bel frekansı (1567.98 Hz - G6 notası)
         osc.frequency.setValueAtTime(1567.98, ctx.currentTime);
 
-        // Ses seviyesi net duyulacak şekilde artırıldı (0.75 Gain)
         gain.gain.setValueAtTime(0, ctx.currentTime);
         gain.gain.linearRampToValueAtTime(0.75, ctx.currentTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
@@ -481,12 +516,20 @@
           toggleRecurring(todo.id);
         };
 
-        const span = document.createElement('span');
-        span.textContent = todo.text;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'todo-text';
+        textSpan.textContent = todo.text;
+        textSpan.title = 'Düzenlemek için tıklayın';
+
+        // Tıklayınca metni düzenleme moduna geçir
+        textSpan.addEventListener('click', (e) => {
+          e.stopPropagation();
+          enableEditing(todo.id, textSpan);
+        });
 
         contentDiv.appendChild(dragHandle);
         contentDiv.appendChild(recurringToggle);
-        contentDiv.appendChild(span);
+        contentDiv.appendChild(textSpan);
 
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions';
@@ -510,6 +553,46 @@
 
         addDragListeners(li);
         todoList.appendChild(li);
+      });
+    }
+
+    // Görev metnini düzenlenebilir yapar
+    function enableEditing(id, textElement) {
+      const todo = todos.find(t => t.id === id);
+      if (!todo) return;
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'edit-input';
+      input.value = todo.text;
+
+      textElement.replaceWith(input);
+      input.focus();
+      input.select();
+
+      let isFinished = false;
+
+      function finishEdit() {
+        if (isFinished) return;
+        isFinished = true;
+
+        const newText = input.value.trim();
+        if (newText.length > 0) {
+          todo.text = capitalizeFirstLetter(newText);
+          saveTodos();
+        }
+        renderTodos();
+      }
+
+      input.addEventListener('blur', finishEdit);
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          finishEdit();
+        } else if (e.key === 'Escape') {
+          isFinished = true;
+          renderTodos();
+        }
       });
     }
 
