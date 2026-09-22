@@ -30,7 +30,7 @@
       --drop-target-bg: rgba(0, 123, 255, 0.08);
       --drop-target-border: #007bff;
       --subtask-line: #cbd5e1;
-      --toggle-arrow: #666666;
+      --toggle-arrow: #555555;
     }
 
     body.dark-mode {
@@ -58,7 +58,7 @@
       --drop-target-bg: rgba(13, 110, 253, 0.18);
       --drop-target-border: #0d6efd;
       --subtask-line: #475569;
-      --toggle-arrow: #aaaaaa;
+      --toggle-arrow: #cccccc;
     }
 
     ::selection {
@@ -140,16 +140,17 @@
       background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
-      transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, background-color 0.2s, border 0.2s;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       max-height: 120px;
       opacity: 1;
       overflow: hidden;
       box-sizing: border-box;
       border-radius: 8px;
       margin-bottom: 4px;
+      transform-origin: top center;
     }
 
-    /* Katlanma (Collapsed) Gizleme Sınıfı */
+    /* Katlanma (Collapsed) Yumuşak Animasyonu */
     li.collapsed-subtask {
       max-height: 0 !important;
       padding-top: 0 !important;
@@ -157,7 +158,8 @@
       margin-top: 0 !important;
       margin-bottom: 0 !important;
       opacity: 0 !important;
-      border: none !important;
+      border-bottom-width: 0 !important;
+      transform: scaleY(0.8);
       pointer-events: none;
     }
 
@@ -172,19 +174,32 @@
       background-color: rgba(255,255,255,0.02);
     }
 
-    /* Katlama / Açma Ok Butonu */
+    /* Kalın SVG Ok Butonu ve Dönüş Animasyonu */
     .collapse-toggle {
       cursor: pointer;
-      font-size: 11px;
-      margin-right: 6px;
-      color: var(--toggle-arrow);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 16px;
-      height: 16px;
+      width: 22px;
+      height: 22px;
+      margin-right: 4px;
+      color: var(--toggle-arrow);
       user-select: none;
-      transition: transform 0.2s ease;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .collapse-toggle:hover {
+      background-color: rgba(0,0,0,0.06);
+    }
+    body.dark-mode .collapse-toggle:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+    .collapse-toggle svg {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: block;
+    }
+    .collapse-toggle.collapsed svg {
+      transform: rotate(-90deg);
     }
     .collapse-toggle.spacer {
       visibility: hidden;
@@ -601,12 +616,16 @@
         const contentDiv = document.createElement('div');
         contentDiv.className = 'item-content';
 
-        // Katlama Oku veya Boşluk
+        // Kalın SVG Ok Simgesi
         const toggleSpan = document.createElement('span');
         if (!todo.parentId && hasSubtasks) {
-          toggleSpan.className = 'collapse-toggle';
-          toggleSpan.innerHTML = todo.isCollapsed ? '►' : '▼';
+          toggleSpan.className = `collapse-toggle ${todo.isCollapsed ? 'collapsed' : ''}`;
           toggleSpan.title = todo.isCollapsed ? 'Alt görevleri göster' : 'Alt görevleri gizle';
+          toggleSpan.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          `;
           toggleSpan.onclick = (e) => toggleCollapse(todo.id, e);
         } else if (!todo.parentId) {
           toggleSpan.className = 'collapse-toggle spacer';
