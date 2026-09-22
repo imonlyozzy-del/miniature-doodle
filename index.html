@@ -129,7 +129,6 @@
 
     ul { list-style-type: none; padding: 0; }
     
-    /* Tüm kart alanı tutulup sürüklenebilir hale getirildi */
     li { 
       display: flex; 
       justify-content: space-between; 
@@ -196,14 +195,9 @@
       margin-right: 6px;
       color: var(--toggle-arrow);
       user-select: none;
-      border-radius: 4px;
-      transition: background-color 0.2s;
     }
-    .collapse-toggle:hover {
-      background-color: rgba(0,0,0,0.06);
-    }
-    body.dark-mode .collapse-toggle:hover {
-      background-color: rgba(255,255,255,0.1);
+    .collapse-toggle:active {
+      opacity: 0.5;
     }
     .collapse-toggle svg {
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -239,19 +233,27 @@
       background-color: var(--border-color);
     }
     
+    /* Çerçevesiz, tema rengiyle tam uyumlu döngü oku */
     .recurring-toggle {
       cursor: pointer;
-      font-size: 16px;
       margin-right: 8px;
-      opacity: 0.35;
-      filter: grayscale(100%);
-      transition: opacity 0.2s, filter 0.2s, transform 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--toggle-arrow); /* Açılır kapanır menü okuyla aynı renk */
+      opacity: 0.3; /* Pasifken silik */
+      transition: opacity 0.2s;
       user-select: none;
+      padding: 2px;
+    }
+    .recurring-toggle:active {
+      transform: scale(0.9);
     }
     .recurring-toggle.active {
-      opacity: 1;
-      filter: grayscale(0%);
-      transform: scale(1.15);
+      opacity: 1; /* Aktifken net */
+    }
+    .recurring-toggle svg {
+      display: block;
     }
 
     .item-content {
@@ -270,12 +272,6 @@
       word-break: break-word;
       flex-grow: 1;
       user-select: text;
-    }
-    .todo-text:hover {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-    body.dark-mode .todo-text:hover {
-      background-color: rgba(255, 255, 255, 0.08);
     }
 
     .edit-input {
@@ -391,10 +387,6 @@
       align-items: center;
       justify-content: center;
       user-select: none;
-    }
-    .fab-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.28);
     }
     .fab-btn:active {
       transform: scale(0.92);
@@ -643,7 +635,6 @@
         const toggleSpan = document.createElement('span');
         if (!todo.parentId && hasSubtasks) {
           toggleSpan.className = `collapse-toggle ${todo.isCollapsed ? 'collapsed' : ''}`;
-          toggleSpan.title = todo.isCollapsed ? 'Alt görevleri göster' : 'Alt görevleri gizle';
           toggleSpan.innerHTML = `
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -656,8 +647,12 @@
 
         const recurringToggle = document.createElement('span');
         recurringToggle.className = `recurring-toggle ${todo.isRecurring ? 'active' : ''}`;
-        recurringToggle.innerHTML = '🔄';
-        recurringToggle.title = todo.isRecurring ? 'Tekrarlayan Görev (Aktif)' : 'Tek Seferlik Görev (Pasif)';
+        recurringToggle.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6"/>
+            <path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        `;
         recurringToggle.onclick = (e) => {
           e.stopPropagation();
           toggleRecurring(todo.id);
@@ -666,7 +661,6 @@
         const textSpan = document.createElement('span');
         textSpan.className = 'todo-text';
         textSpan.textContent = todo.text;
-        textSpan.title = 'Düzenlemek için tıklayın';
 
         textSpan.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -685,7 +679,6 @@
         const completeBtn = document.createElement('button');
         completeBtn.textContent = '✓';
         completeBtn.className = 'complete-btn';
-        completeBtn.title = 'Tamamla (+1 XP)';
         completeBtn.onclick = (e) => completeTodo(todo.id, li, completeBtn, e);
 
         const delBtn = document.createElement('button');
