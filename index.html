@@ -30,6 +30,7 @@
       --drop-target-bg: rgba(0, 123, 255, 0.08);
       --drop-target-border: #007bff;
       --subtask-line: #cbd5e1;
+      --toggle-arrow: #666666;
     }
 
     body.dark-mode {
@@ -57,9 +58,9 @@
       --drop-target-bg: rgba(13, 110, 253, 0.18);
       --drop-target-border: #0d6efd;
       --subtask-line: #475569;
+      --toggle-arrow: #aaaaaa;
     }
 
-    /* Metin Seçim Renkleri (Selection) */
     ::selection {
       background-color: #b3d7ff;
       color: #000000;
@@ -101,7 +102,6 @@
       opacity: 0.7;
     }
     
-    /* XP Sayacı Stilleri */
     .xp-container {
       display: flex;
       align-items: center;
@@ -140,13 +140,25 @@
       background: var(--card-bg);
       user-select: none;
       touch-action: manipulation;
-      transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease, background-color 0.2s, border 0.2s;
-      max-height: 100px;
+      transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, background-color 0.2s, border 0.2s;
+      max-height: 120px;
       opacity: 1;
       overflow: hidden;
-      box-sizing: border-border-box;
+      box-sizing: border-box;
       border-radius: 8px;
       margin-bottom: 4px;
+    }
+
+    /* Katlanma (Collapsed) Gizleme Sınıfı */
+    li.collapsed-subtask {
+      max-height: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      opacity: 0 !important;
+      border: none !important;
+      pointer-events: none;
     }
 
     /* Alt Görev Yapısı */
@@ -160,6 +172,25 @@
       background-color: rgba(255,255,255,0.02);
     }
 
+    /* Katlama / Açma Ok Butonu */
+    .collapse-toggle {
+      cursor: pointer;
+      font-size: 11px;
+      margin-right: 6px;
+      color: var(--toggle-arrow);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      user-select: none;
+      transition: transform 0.2s ease;
+    }
+    .collapse-toggle.spacer {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     /* Sürükle Bırak ve Alt Görev Hedefleme */
     li.drag-over-subtask {
       background-color: var(--drop-target-bg) !important;
@@ -167,7 +198,6 @@
       outline-offset: -2px;
     }
     
-    /* Yumuşak Kaybolma Animasyon Sınıfı */
     li.completing {
       opacity: 0;
       transform: scale(0.95) translateY(-8px);
@@ -184,7 +214,7 @@
     }
     .drag-handle {
       cursor: grab;
-      margin-right: 10px;
+      margin-right: 8px;
       color: var(--drag-handle);
       font-size: 18px;
     }
@@ -192,7 +222,7 @@
     .recurring-toggle {
       cursor: pointer;
       font-size: 16px;
-      margin-right: 10px;
+      margin-right: 8px;
       opacity: 0.35;
       filter: grayscale(100%);
       transition: opacity 0.2s, filter 0.2s, transform 0.2s;
@@ -265,7 +295,6 @@
       font-size: 14px;
     }
 
-    /* Yükselen +1 Efekti */
     .plus-one-float {
       position: fixed;
       color: #28a745;
@@ -292,7 +321,6 @@
       }
     }
     
-    /* Yüzen Buton Grubu (FAB Stack) */
     .fab-container {
       position: fixed;
       bottom: 24px;
@@ -418,7 +446,6 @@
 
     let rawTodos = JSON.parse(localStorage.getItem('myTodos')) || [];
     
-    // Veri yapısını alt görev destekleyecek şekilde güncelle
     let todos = rawTodos.map((item, index) => {
       if (typeof item === 'string') {
         return {
@@ -427,10 +454,12 @@
           isRecurring: false,
           isCompleted: false,
           order: index,
-          parentId: null
+          parentId: null,
+          isCollapsed: false
         };
       }
       if (item.parentId === undefined) item.parentId = null;
+      if (item.isCollapsed === undefined) item.isCollapsed = false;
       return item;
     });
 
@@ -516,12 +545,21 @@
       }
     }
 
+    function toggleCollapse(id, e) {
+      if (e) e.stopPropagation();
+      const todo = todos.find(t => t.id === id);
+      if (todo) {
+        todo.isCollapsed = !todo.isCollapsed;
+        saveTodos();
+        renderTodos();
+      }
+    }
+
     function renderTodos() {
       todoList.innerHTML = '';
       
       let visibleTodos = todos.filter(todo => !todo.isCompleted);
 
-      // Ana görevleri ve alt görevleri düzenli sırayla getir
       let parentTodos = visibleTodos.filter(t => !t.parentId);
       
       parentTodos.sort((a, b) => {
@@ -539,7 +577,6 @@
         orderedList.push(...subtasks);
       });
 
-      // Yetim kalmış alt görevler varsa onları da ekle
       visibleTodos.forEach(t => {
         if (!orderedList.includes(t)) {
           orderedList.push(t);
@@ -551,12 +588,29 @@
         li.draggable = true;
         li.dataset.id = todo.id;
 
+        const hasSubtasks = visibleTodos.some(t => t.parentId === todo.id);
+
         if (todo.parentId) {
           li.classList.add('is-subtask');
+          const parentTodo = todos.find(t => t.id === todo.parentId);
+          if (parentTodo && parentTodo.isCollapsed) {
+            li.classList.add('collapsed-subtask');
+          }
         }
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'item-content';
+
+        // Katlama Oku veya Boşluk
+        const toggleSpan = document.createElement('span');
+        if (!todo.parentId && hasSubtasks) {
+          toggleSpan.className = 'collapse-toggle';
+          toggleSpan.innerHTML = todo.isCollapsed ? '►' : '▼';
+          toggleSpan.title = todo.isCollapsed ? 'Alt görevleri göster' : 'Alt görevleri gizle';
+          toggleSpan.onclick = (e) => toggleCollapse(todo.id, e);
+        } else if (!todo.parentId) {
+          toggleSpan.className = 'collapse-toggle spacer';
+        }
 
         const dragHandle = document.createElement('span');
         dragHandle.className = 'drag-handle';
@@ -581,6 +635,9 @@
           enableEditing(todo.id, textSpan);
         });
 
+        if (!todo.parentId) {
+          contentDiv.appendChild(toggleSpan);
+        }
         contentDiv.appendChild(dragHandle);
         contentDiv.appendChild(recurringToggle);
         contentDiv.appendChild(textSpan);
@@ -662,7 +719,6 @@
       }
     }
 
-    // Advanced Sürükle-Bırak Mantığı (Alt Görev Destekli)
     let draggedItem = null;
 
     function addDragListeners(item) {
@@ -692,13 +748,11 @@
 
         if (!draggedTodo || !targetTodo) return;
 
-        // Kendisinin altındaki bir göreve sürüklenmesini engelle
         if (draggedTodo.id === targetTodo.parentId) return;
 
         const box = item.getBoundingClientRect();
         const offsetX = e.clientX - box.left;
 
-        // Sağ tarafa sürükleme (Alt görev yapma isteği)
         if (offsetX > 60 && !targetTodo.parentId) {
           item.classList.add('drag-over-subtask');
         } else {
@@ -728,15 +782,14 @@
 
         if (item.classList.contains('drag-over-subtask')) {
           item.classList.remove('drag-over-subtask');
-          // Alt görev yap
           if (!targetTodo.parentId && draggedTodo.id !== targetTodo.id) {
             draggedTodo.parentId = targetTodo.id;
+            targetTodo.isCollapsed = false;
           }
         }
       });
     }
 
-    // Liste dışı boş alana sürüklendiğinde ana görev yap
     todoList.addEventListener('dragover', (e) => {
       e.preventDefault();
       const isOverLi = e.target.closest('li');
@@ -749,7 +802,7 @@
     });
 
     function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+      const draggableElements = [...container.querySelectorAll('li:not(.dragging):not(.collapsed-subtask)')];
 
       return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
@@ -782,7 +835,8 @@
         isRecurring: false,
         isCompleted: false,
         order: todos.length,
-        parentId: null
+        parentId: null,
+        isCollapsed: false
       };
       todos.push(newTodo);
       saveTodos();
@@ -813,7 +867,6 @@
 
       liElement.classList.add('completing');
 
-      // Bağlı olan alt görevleri de tespit et ve animasyon ver
       const subtaskTodos = todos.filter(t => t.parentId === id && !t.isCompleted);
       subtaskTodos.forEach(sub => {
         const subLi = todoList.querySelector(`li[data-id="${sub.id}"]`);
@@ -826,14 +879,12 @@
           const mainTodo = todos[index];
           let earnedXP = 1;
 
-          // Ana görevi tamamla
           if (mainTodo.isRecurring) {
             mainTodo.isCompleted = true;
           } else {
             todos.splice(index, 1);
           }
 
-          // Bağlı alt görevleri tamamla
           subtaskTodos.forEach(sub => {
             const subIndex = todos.findIndex(t => t.id === sub.id);
             if (subIndex !== -1) {
@@ -850,13 +901,12 @@
           updateXP(xp + earnedXP);
           renderTodos();
         }
-      }, 400);
+      }, 300);
     }
 
     function removeTodo(id) {
       const index = todos.findIndex(t => t.id === id);
       if (index !== -1) {
-        // Alt görevlerin parentId bağlantısını kaldır
         todos.forEach(t => {
           if (t.parentId === id) t.parentId = null;
         });
